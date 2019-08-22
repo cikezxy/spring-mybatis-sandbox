@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cikezxy.sandbox.spring.mybatis.dao.FilmDao">
+    <resultMap id="FilmDtoResultMap" type="com.cikezxy.sandbox.spring.mybatis.dto.FilmDto">
+        <id column="film_id" jdbcType="SMALLINT" property="id"/>
+        <result column="title" jdbcType="VARCHAR" property="title"/>
+        <association property="language" resultMap="LanguageResultMap"></association>
+        <association property="originalLanguage" resultMap="LanguageResultMap" columnPrefix="original_"></association>
+        <collection property="actors" ofType="com.cikezxy.sandbox.spring.mybatis.dto.ActorDto">
+            <id column="actor_id" jdbcType="SMALLINT" property="id"></id>
+            <result column="actor_name" jdbcType="VARCHAR" property="name"/>
+        </collection>
+    </resultMap>
+    <resultMap id="LanguageResultMap" type="com.cikezxy.sandbox.spring.mybatis.dto.LanguageDto">
+        <id column="language_id" jdbcType="TINYINT" property="id"/>
+        <result column="name" jdbcType="CHAR" property="name"/>
+    </resultMap>
+    <select id="selectFilmDtoByTitle" parameterType="java.lang.String" resultMap="FilmDtoResultMap">
+        SELECT 
+          f.film_id,
+          f.title, 
+          a.actor_id,concat_ws('.',a.first_name,a.last_name) as actor_name,
+          f.language_id,l.name,
+          f.original_language_id,ol.name as original_name
+        FROM film f
+        left join film_actor fa on fa.film_id = f.film_id
+        left join actor a on a.actor_id = fa.actor_id
+        left join language l on l.language_id = f.language_id
+        left join language ol on ol.language_id = f.original_language_id
+        where f.title = #{title}
+    </select>
+
+    <select id="selectFilmDtoByTitleIn" parameterType="java.lang.String" resultMap="FilmDtoResultMap">
+        SELECT
+        f.film_id,
+        f.title,
+        a.actor_id,
+        concat_ws('.',a.first_name,a.last_name) as actor_name,
+        f.language_id,
+        l.name,
+        f.original_language_id,
+        ol.name as original_name
+        FROM film f
+        left join film_actor fa on fa.film_id = f.film_id
+        left join actor a on a.actor_id = fa.actor_id
+        left join language l on l.language_id = f.language_id
+        left join language ol on ol.language_id = f.original_language_id
+        where f.title in
+        <foreach item="item" index="index" collection="list" open="(" separator="," close=")">#{item}</foreach>
+    </select>
+
+    <select id="selectFilmTitleStartsWith" resultType="java.lang.String">
+        select title from film where title like #{prefix}"%"
+    </select>
+
+    <select id="selectFilmTitleByRating" resultType="java.lang.String">
+        select title from film where rating = #{rating}
+    </select>
+</mapper>
